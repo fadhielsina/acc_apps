@@ -95,11 +95,11 @@
             <tbody>
                 @foreach ($laporan['data'] as $kategori)
                 <tr>
-                    <td class="fw-bold">{{ $kategori->nama }}</td>
+                    <td class="fw-bold">{{ $kategori }}</td>
                     @foreach ($laporan['bulanList'] as $bulan)
                     @php
                     $dataBulan = collect($laporan['list_data'])->firstWhere(function ($item) use ($kategori, $bulan) {
-                    return $item['kategori'] == $kategori->nama && $item['bulan'] == $bulan;
+                    return $item['kategori'] == $kategori && $item['bulan'] == $bulan;
                     });
 
                     // Menentukan nilai yang akan ditampilkan

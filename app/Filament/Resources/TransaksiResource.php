@@ -37,11 +37,14 @@ class TransaksiResource extends Resource
                     ->label('Tanggal Transaksi')
                     ->required(),
 
-                // Select::make('id_master_coa')
-                //     ->label('COA')
-                //     ->options(MasterCoa::pluck('nama', 'id'))
-                //     ->searchable()
-                //     ->required(),
+                TextInput::make('nominal')
+                    ->label('Nominal')
+                    ->numeric()
+                    ->inputMode('decimal') // Mode input angka
+                    ->prefix('Rp')
+                    ->mask(RawJs::make('$money($input)'))
+                    ->stripCharacters(',')
+                    ->required(),
 
                 Select::make('id_master_coa')
                     ->label('COA')
@@ -62,7 +65,20 @@ class TransaksiResource extends Resource
                         })->toArray();
                     })
                     ->searchable()
-                    ->required(),
+                    ->required()->reactive()
+                    ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                        $coa = MasterCoa::find($state);
+                        $nominal = $get('nominal');
+                        if ($coa) {
+                            if (str_starts_with($coa->kode, '4')) { // Income
+                                $set('kredit', $nominal);
+                                $set('debit', 0);
+                            } elseif (str_starts_with($coa->kode, '6')) { // Expense
+                                $set('debit', $nominal);
+                                $set('kredit', 0);
+                            }
+                        }
+                    }),
 
                 TextInput::make('debit')
                     ->label('Debit')
@@ -72,6 +88,7 @@ class TransaksiResource extends Resource
                     ->default(0)
                     ->mask(RawJs::make('$money($input)'))
                     ->stripCharacters(',')
+                    ->readOnly()
                     ->required(),
 
                 TextInput::make('kredit')
@@ -82,6 +99,7 @@ class TransaksiResource extends Resource
                     ->default(0)
                     ->mask(RawJs::make('$money($input)'))
                     ->stripCharacters(',')
+                    ->readOnly()
                     ->required(),
 
 
@@ -89,7 +107,7 @@ class TransaksiResource extends Resource
                     ->label('Deskripsi')
                     ->maxLength(500)
                     ->required(),
-            ]);
+            ])->columns(3);
     }
 
     public static function table(Table $table): Table
